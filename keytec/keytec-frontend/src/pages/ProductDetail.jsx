@@ -12,6 +12,7 @@ import { useAuthStore } from '../store/auth'
 import Button from '../components/ui/Button'
 import Spinner from '../components/ui/Spinner'
 import { formatPrice, formatDate } from '../utils/format'
+import ReviewForm from '../components/ReviewForm'
 
 export default function ProductDetail() {
   const { slug } = useParams()
@@ -253,8 +254,20 @@ export default function ProductDetail() {
           )}
           {activeTab === 'reviews' && (
             <div className="space-y-4 max-w-3xl">
+              {/* Formulario solo si esta autenticado */}
+              {token ? (
+                <ReviewForm slug={slug} />
+              ) : (
+                <div className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-4 text-sm">
+                  <Link to="/login" state={{ from: `/productos/${slug}` }} className="text-[var(--color-primary)] hover:underline">
+                    Inicia sesion
+                  </Link>{' '}
+                  para escribir una resena.
+                </div>
+              )}
+
               {reviews?.length === 0 && (
-                <p className="text-[var(--color-text-muted)]">Aún no hay reseñas. ¡Sé el primero!</p>
+                <p className="text-[var(--color-text-muted)] pt-2">Aún no hay reseñas. ¡Sé el primero!</p>
               )}
               {reviews?.map((r) => (
                 <div key={r.id} className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl p-5">
@@ -272,7 +285,10 @@ export default function ProductDetail() {
                       />
                     ))}
                   </div>
-                  {r.comment && <p className="text-sm text-[var(--color-text-muted)]">{r.comment}</p>}
+                  {r.title && <p className="text-sm font-medium mb-1">{r.title}</p>}
+                  {(r.body || r.comment) && (
+                    <p className="text-sm text-[var(--color-text-muted)]">{r.body || r.comment}</p>
+                  )}
                 </div>
               ))}
             </div>

@@ -1,6 +1,6 @@
 import { Suspense, useRef, useMemo, useEffect } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { useGLTF, Environment, OrbitControls, Text, Bounds, RoundedBox } from '@react-three/drei'
+import { useGLTF, OrbitControls, Text, Bounds, RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
 
 /**
@@ -11,7 +11,7 @@ import * as THREE from 'three'
  *
  * Controles:
  *   - Click izq: rotar
- *   - Ctrl + click izq: mover (pan)
+ *   - (Shift + click izq)/click derecho: mover (pan)
  *   - Scroll: zoom
  */
 
@@ -31,8 +31,6 @@ function StandardKey({ color, modelScale }) {
         child.material.color = new THREE.Color(color || '#2a2a3a')
         child.material.metalness = 0.05
         child.material.roughness = 0.55
-        child.castShadow = true
-        child.receiveShadow = true
       }
     })
     return c
@@ -55,8 +53,6 @@ function WideKey({ keyData, color, modelScale }) {
         args={[w, height, h]}
         radius={modelScale * 0.06}
         smoothness={4}
-        castShadow
-        receiveShadow
       >
         <meshStandardMaterial color={color || '#2a2a3a'} metalness={0.05} roughness={0.5} />
       </RoundedBox>
@@ -240,7 +236,6 @@ export default function KeyboardCanvas3D(props) {
   return (
     <div className="w-full h-[520px] rounded-2xl overflow-hidden bg-gradient-to-br from-[#0a0a0f] via-[#1a1a26] to-[#0a0a0f] border border-[var(--color-border)]">
       <Canvas
-        shadows
         camera={{ position: [0, 7, 8], fov: 38 }}
         gl={{ antialias: true, alpha: false }}
       >
@@ -251,15 +246,12 @@ export default function KeyboardCanvas3D(props) {
         <directionalLight
           position={[5, 8, 4]}
           intensity={1.4}
-          castShadow
-          shadow-mapSize={[1024, 1024]}
         />
         <pointLight position={[-5, 3, -3]} intensity={0.8} color="#a855f7" />
         <pointLight position={[5, 3, -3]} intensity={0.6} color="#22d3ee" />
 
         <Suspense fallback={<Loading />}>
           <KeyboardScene {...props} />
-          <Environment preset="warehouse" />
         </Suspense>
 
         <SmartControls />

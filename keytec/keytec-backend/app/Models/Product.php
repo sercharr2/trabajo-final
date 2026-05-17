@@ -43,7 +43,7 @@ class Product extends Model
     public function getPrimaryImageUrlAttribute(): ?string
     {
         $primary = $this->images()->where('is_primary', true)->first();
-        return $primary ? asset('storage/' . $primary->path) : null;
+        return $primary ? $primary->url : null;
     }
  
     // ── Scopes ───────────────────────────────────────────────

@@ -17,14 +17,13 @@ class ProductSeeder extends Seeder
         $custom  = Category::where('name', 'Keycaps Personalizadas')->first();
         $lineal  = Category::where('name', 'Lineales')->first();
 
-        // Tags
         $tagGaming = Tag::create(['name' => 'Gaming']);
         $tagPBT    = Tag::create(['name' => 'PBT']);
         $tagRGB    = Tag::create(['name' => 'RGB']);
         $tagCustom = Tag::create(['name' => 'Custom']);
         $tagOferta = Tag::create(['name' => 'Oferta']);
 
-        // ── Producto 1: Teclado TKL ────────────────────────────
+        // ── Producto 1: KeyTec KT-87 TKL Aluminio ─────────────
         $p1 = Product::create([
             'category_id'       => $tkl->id,
             'name'              => 'KeyTec KT-87 TKL Aluminio',
@@ -37,12 +36,7 @@ class ProductSeeder extends Seeder
             'weight'            => 1200,
             'is_featured'       => true,
         ]);
-        $this->attachImages($p1, [
-            'ducky_asset_OK-M_product_1-65.jpg',
-            'ducky_asset_OK-M_product_65.jpg',
-            'ducky_asset_ONE3_product-1.jpg',
-            'ducky_asset_ONE3_product-2.jpg',
-        ]);
+        $this->attachImages($p1, ['products/p1-1.jpg', 'products/p1-2.jpg', 'products/p1-3.jpg']);
         $p1->attributes()->createMany([
             ['attribute_name' => 'Layout',          'attribute_value' => 'TKL (80%)',    'order' => 1],
             ['attribute_name' => 'Carcasa',         'attribute_value' => 'Aluminio',     'order' => 2],
@@ -54,7 +48,7 @@ class ProductSeeder extends Seeder
         ]);
         $p1->tags()->attach([$tagGaming->id, $tagRGB->id]);
 
-        // ── Producto 2: Teclado 65% ────────────────────────────
+        // ── Producto 2: KeyTec KT-65 Compact ──────────────────
         $p2 = Product::create([
             'category_id'       => $compact->id,
             'name'              => 'KeyTec KT-65 Compact',
@@ -66,12 +60,7 @@ class ProductSeeder extends Seeder
             'weight'            => 900,
             'is_featured'       => true,
         ]);
-        $this->attachImages($p2, [
-            'gk61v3_white_0.jpg',
-            'gk61v3_black_0.jpg',
-            'one3-pro_asset_product_100-1.jpg',
-            'one3-pro_asset_product_100-2.jpg',
-        ]);
+        $this->attachImages($p2, ['products/p2-1.jpg', 'products/p2-2.jpg', 'products/p2-3.jpg']);
         $p2->attributes()->createMany([
             ['attribute_name' => 'Layout',     'attribute_value' => '65%',          'order' => 1],
             ['attribute_name' => 'Montaje',    'attribute_value' => 'Gasket',       'order' => 2],
@@ -80,7 +69,7 @@ class ProductSeeder extends Seeder
         ]);
         $p2->tags()->attach([$tagGaming->id]);
 
-        // ── Producto 3: Keycaps set PBT ───────────────────────
+        // ── Producto 3: Tokyo Nights ──────────────────────────
         $p3 = Product::create([
             'category_id'       => $sets->id,
             'name'              => 'Set Keycaps PBT DoubleShot "Tokyo Nights"',
@@ -92,11 +81,7 @@ class ProductSeeder extends Seeder
             'weight'            => 250,
             'is_featured'       => true,
         ]);
-        $this->attachImages($p3, [
-            'hkg_lavender_lite2_1200-1000_e3cd6a8c-f9ec-40c4-9bac-ce430c98b9e0.png',
-            'KAPGHOSTKEYCAPS_Base_kitting.jpg',
-            'GMK_N16_Kitting_map.jpg',
-        ]);
+        $this->attachImages($p3, ['products/p3-1.jpg', 'products/p3-2.jpg', 'products/p3-3.jpg']);
         $p3->attributes()->createMany([
             ['attribute_name' => 'Material',        'attribute_value' => 'PBT',               'order' => 1],
             ['attribute_name' => 'Proceso',         'attribute_value' => 'Doubleshot',        'order' => 2],
@@ -106,7 +91,7 @@ class ProductSeeder extends Seeder
         ]);
         $p3->tags()->attach([$tagPBT->id, $tagOferta->id]);
 
-        // ── Producto 4: Keycaps personalizables ───────────────
+        // ── Producto 4: Keycaps Personalizadas ────────────────
         $p4 = Product::create([
             'category_id'       => $custom->id,
             'name'              => 'Keycaps Personalizadas PBT — Diseño Propio',
@@ -119,12 +104,7 @@ class ProductSeeder extends Seeder
             'is_customizable'   => true,
             'is_featured'       => true,
         ]);
-        $this->attachImages($p4, [
-            'ISO_Cherry_Profile_Dye-Sub_PBT_Full_Set_Keycap_Set_-_White_Mint_-_ES.jpg',
-            'Keychron_Hacker_Mint_ISO_ES_Custom_PBT_Keycaps_iso_Espanol.png',
-            'Keychron-Spanish-ISO-Low_Profile-LSA-Full-Set-Keycap-Set.jpg',
-            'Belgian-ISO.jpg',
-        ]);
+        $this->attachImages($p4, ['products/p4-1.jpg', 'products/p4-2.jpg', 'products/p4-3.jpg']);
         $p4->attributes()->createMany([
             ['attribute_name' => 'Material',  'attribute_value' => 'PBT',           'order' => 1],
             ['attribute_name' => 'Proceso',   'attribute_value' => 'Dye-Sub',       'order' => 2],
@@ -133,7 +113,7 @@ class ProductSeeder extends Seeder
         ]);
         $p4->tags()->attach([$tagPBT->id, $tagCustom->id]);
 
-        // ── Producto 5: Switches Gateron ──────────────────────
+        // ── Producto 5: Gateron Yellow Pro ────────────────────
         $p5 = Product::create([
             'category_id'       => $lineal->id,
             'name'              => 'Gateron Yellow Pro (x35)',
@@ -144,10 +124,7 @@ class ProductSeeder extends Seeder
             'sku'               => 'SW-GAT-YLW-35',
             'weight'            => 80,
         ]);
-        $this->attachImages($p5, [
-            'Fallout_Nuka_Cola_asset_product_1.jpg',
-            'Fallout_Nuka_Cola_asset_product_2.jpg',
-        ]);
+        $this->attachImages($p5, ['products/p5-1.jpg', 'products/p5-2.jpg', 'products/p5-3.jpg']);
         $p5->attributes()->createMany([
             ['attribute_name' => 'Tipo',            'attribute_value' => 'Lineal',         'order' => 1],
             ['attribute_name' => 'Actuación',       'attribute_value' => '35g',            'order' => 2],
@@ -158,7 +135,7 @@ class ProductSeeder extends Seeder
             ['attribute_name' => 'Lubricado',       'attribute_value' => 'Sí (fábrica)',   'order' => 7],
         ]);
 
-        // ── Producto extra 6: Keycaps Fallout ──────────────────
+        // ── Producto 6: Nuka Cola Edition ─────────────────────
         $p6 = Product::create([
             'category_id'       => $sets->id,
             'name'              => 'Set Keycaps "Nuka Cola Edition"',
@@ -169,10 +146,7 @@ class ProductSeeder extends Seeder
             'sku'               => 'KC-FALLOUT-NK',
             'weight'            => 280,
         ]);
-        $this->attachImages($p6, [
-            'Fallout_Nuka_Cola_asset_product_2.jpg',
-            'Fallout_Nuka_Cola_asset_product_1.jpg',
-        ]);
+        $this->attachImages($p6, ['products/p6-1.jpg', 'products/p6-2.jpg', 'products/p6-3.jpg']);
         $p6->attributes()->createMany([
             ['attribute_name' => 'Material', 'attribute_value' => 'PBT',      'order' => 1],
             ['attribute_name' => 'Proceso',  'attribute_value' => 'Dye-Sub',  'order' => 2],
@@ -181,7 +155,7 @@ class ProductSeeder extends Seeder
         ]);
         $p6->tags()->attach([$tagPBT->id]);
 
-        // ── Producto extra 7: Teclado custom Ducky-style ───────
+        // ── Producto 7: KeyTec One X TKL ──────────────────────
         $p7 = Product::create([
             'category_id'       => $tkl->id,
             'name'              => 'KeyTec One X TKL',
@@ -192,10 +166,7 @@ class ProductSeeder extends Seeder
             'sku'               => 'KT-ONEX-TKL',
             'weight'            => 1100,
         ]);
-        $this->attachImages($p7, [
-            'ducky_onex_product-2.jpg',
-            'ducky_onex_product-2_72860a4a-7769-4d51-9f76-3d5415e46aa6.jpg',
-        ]);
+        $this->attachImages($p7, ['products/p7-1.jpg', 'products/p7-2.jpg', 'products/p7-3.jpg']);
         $p7->attributes()->createMany([
             ['attribute_name' => 'Layout',    'attribute_value' => 'TKL',     'order' => 1],
             ['attribute_name' => 'Hot-swap',  'attribute_value' => 'No',      'order' => 2],
@@ -205,14 +176,15 @@ class ProductSeeder extends Seeder
     }
 
     /**
-     * Adjunta imágenes al producto. La primera del array se marca como primaria.
-     * Asume que las imágenes ya están en storage/app/public/products/.
+     * Adjunta imagenes al producto.
+     * Si el path empieza por http(s)://, se trata como URL externa.
+     * Si no, se asume que es un path relativo a storage/ → /storage/{path}.
      */
-    private function attachImages(Product $product, array $filenames): void
+    private function attachImages(Product $product, array $paths): void
     {
-        foreach ($filenames as $i => $file) {
+        foreach ($paths as $i => $path) {
             $product->images()->create([
-                'path'       => 'products/' . $file,
+                'path'       => $path,
                 'alt_text'   => $product->name,
                 'is_primary' => $i === 0,
                 'order'      => $i,

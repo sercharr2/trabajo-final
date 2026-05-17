@@ -1,34 +1,31 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
-    | Cross-Origin Resource Sharing (CORS) Configuration
+    | CORS Configuration
     |--------------------------------------------------------------------------
-    |
-    | Here you may configure your settings for cross-origin resource sharing
-    | or "CORS". This determines what cross-origin operations may execute
-    | in web browsers. You are free to adjust these settings as needed.
-    |
-    | To learn more: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
-    |
+    | Como usamos autenticacion por Bearer token (Sanctum personal access
+    | tokens), no necesitamos cookies. Por eso supports_credentials esta a
+    | false, lo que nos permite usar allowed_origins: ['*'] sin restricciones.
     */
 
-    'paths' => ['*'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => [env('FRONTEND_URL', 'http://localhost:5173')],
+    // Permite cualquier origen. Si quieres restringir, cambia '*' por la URL
+    // exacta del frontend (sin barra final): 'http://keytec-app.42web.io'
+    'allowed_origins' => ['*'],
 
-    'allowed_origins_patterns' => [],
+    // Tambien aceptamos cualquier subdominio de 42web.io por si acaso
+    'allowed_origins_patterns' => ['#^https?://.*\.42web\.io$#'],
 
     'allowed_headers' => ['*'],
 
     'exposed_headers' => [],
 
-    'max_age' => 0,
+    'max_age' => 3600,
 
-    'supports_credentials' => true,
-
+    'supports_credentials' => false,
 ];

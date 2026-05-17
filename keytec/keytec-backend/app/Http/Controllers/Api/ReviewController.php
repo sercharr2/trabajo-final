@@ -28,19 +28,23 @@ class ReviewController extends Controller
 
     /**
      * POST /api/v1/products/{slug}/reviews
-     * Crea una resena (autenticado).
+     * Crea una resena (autenticado). Las resenas se aprueban
+     * automaticamente para esta demo (no hay moderacion).
      */
     public function store(Request $request, string $slug)
     {
         $product = Product::where('slug', $slug)->firstOrFail();
 
         $data = $request->validate([
-            'rating' => ['required', 'integer', 'min:1', 'max:5'],
-            'title'  => ['nullable', 'string', 'max:120'],
-            'body'   => ['nullable', 'string', 'max:1000'],
+            'rating'  => ['required', 'integer', 'min:1', 'max:5'],
+            'title'   => ['nullable', 'string', 'max:120'],
+            'body'    => ['nullable', 'string', 'max:1000'],
+            'comment' => ['nullable', 'string', 'max:1000'], // alias por compatibilidad
         ]);
 
-        // Una resena por usuario por producto (la unique de la tabla evita duplicados)
+        // El frontend manda 'comment' pero la tabla usa 'body' - normalizamos
+        $body = $data['body'] ?? $data['comment'] ?? null;
+
         $review = Review::updateOrCreate(
             [
                 'product_id' => $product->id,
@@ -49,8 +53,8 @@ class ReviewController extends Controller
             [
                 'rating'      => $data['rating'],
                 'title'       => $data['title'] ?? null,
-                'body'        => $data['body'] ?? null,
-                'is_approved' => false, // pendiente de moderacion
+                'body'        => $body,
+                'is_approved' => true, // auto-aprobar para la demo
             ]
         );
 

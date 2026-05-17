@@ -1,0 +1,45 @@
+# ─── KeyTec - .htaccess principal (htdocs/) ─────────────────────────────
+# Sirve dos cosas en el mismo dominio:
+#   - /api/*, /sanctum/*, /storage/*  → Laravel (carpeta /public)
+#   - cualquier archivo .php directo en la raiz → public/
+#   - cualquier otra ruta             → SPA React (htdocs/spa/index.html)
+
+# Al pedir /, sirve el SPA en lugar de buscar index.html/index.php
+DirectoryIndex spa/index.html
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # === 0) Si piden /, redirige al SPA explicitamente ===
+    RewriteRule ^$ spa/index.html [L]
+
+    # === 1) Backend Laravel ===
+    # /api, /sanctum, /storage van a Laravel
+    RewriteCond %{REQUEST_URI} ^/(api|sanctum|storage)(/|$)
+    RewriteRule ^(.*)$ public/$1 [L]
+
+    # === 2) Archivos .php en la raiz (reseed.php, clear-cache.php, etc) ===
+    # van a Laravel public/
+    RewriteCond %{REQUEST_URI} ^/[^/]+\.php$
+    RewriteRule ^(.*)$ public/$1 [L]
+
+    # === 3) Frontend SPA ===
+    # Si el fichero/carpeta solicitado existe dentro de /spa/, sirve eso
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{DOCUMENT_ROOT}/spa%{REQUEST_URI} -f [OR]
+    RewriteCond %{DOCUMENT_ROOT}/spa%{REQUEST_URI} -d
+    RewriteRule ^(.*)$ spa/$1 [L]
+
+    # SPA fallback: cualquier otra ruta sin fichero → spa/index.html
+    RewriteCond %{REQUEST_URI} !^/(api|sanctum|storage|public|vendor|app|bootstrap|config|database|resources|routes|tests)(/|$)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ spa/index.html [L]
+</IfModule>
+
+# Bloquea acceso a ficheros sensibles del backend
+<FilesMatch "^\.env|composer\.(json|lock)|package\.json|\.git">
+    Order allow,deny
+    Deny from all
+</FilesMatch>

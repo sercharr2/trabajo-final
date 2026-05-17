@@ -6,14 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductImage;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AdminProductController extends Controller
 {
     /** GET /api/v1/admin/products */
     public function index(Request $request)
     {
-        $query = Product::with('category');
+        $query = Product::with(['category', 'images']);
 
         if ($request->filled('search')) {
             $term = $request->search;
@@ -37,7 +37,7 @@ class AdminProductController extends Controller
     {
         $data = $this->validateData($request);
         $product = Product::create($data);
-        return response()->json($product->load('category'), 201);
+        return response()->json($product->load(['category', 'images']), 201);
     }
 
     /** PUT /api/v1/admin/products/{id} */
@@ -46,7 +46,7 @@ class AdminProductController extends Controller
         $product = Product::findOrFail($id);
         $data = $this->validateData($request, $id);
         $product->update($data);
-        return response()->json($product->fresh('category'));
+        return response()->json($product->fresh(['category', 'images']));
     }
 
     /** DELETE /api/v1/admin/products/{id} */
@@ -56,24 +56,40 @@ class AdminProductController extends Controller
         return response()->json(null, 204);
     }
 
-    /** POST /api/v1/admin/products/{id}/images */
+    /**
+     * POST /api/v1/admin/products/{id}/images
+     * Sube una imagen al producto. Como InfinityFree no permite hacer
+     * php artisan storage:link, guardamos directamente en public/storage/
+     * (que es accesible via http://.../storage/products/...).
+     */
     public function uploadImage(Request $request, int $id)
     {
         $product = Product::findOrFail($id);
         $request->validate([
             'image'      => ['required', 'image', 'max:4096'],
-            'is_primary' => ['boolean'],
+            'is_primary' => ['sometimes', 'boolean'],
         ]);
 
-        $path = $request->file('image')->store('products', 'public');
+        // Generamos un nombre unico para evitar choques
+        $file = $request->file('image');
+        $ext  = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+        $name = 'p' . $product->id . '-' . Str::random(8) . '.' . $ext;
 
-        // Si es primary, quita la primary anterior
+        // Destino: public/storage/products/  (accesible en /storage/products/...)
+        $destDir = public_path('storage/products');
+        if (! is_dir($destDir)) {
+            @mkdir($destDir, 0755, true);
+        }
+        $file->move($destDir, $name);
+
+        // Si is_primary, desmarca las anteriores
         if ($request->boolean('is_primary')) {
             $product->images()->update(['is_primary' => false]);
         }
 
         $img = $product->images()->create([
-            'path'       => $path,
+            'path'       => 'products/' . $name,
+            'alt_text'   => $product->name,
             'is_primary' => $request->boolean('is_primary'),
             'order'      => $product->images()->count(),
         ]);
@@ -85,7 +101,13 @@ class AdminProductController extends Controller
     public function deleteImage(int $id, int $imgId)
     {
         $img = ProductImage::where('product_id', $id)->findOrFail($imgId);
-        Storage::disk('public')->delete($img->path);
+        // Si es local (no URL externa), intenta borrar el fichero
+        if (! preg_match('#^https?://#i', $img->path)) {
+            $full = public_path('storage/' . $img->path);
+            if (file_exists($full)) {
+                @unlink($full);
+            }
+        }
         $img->delete();
         return response()->json(null, 204);
     }
@@ -100,7 +122,7 @@ class AdminProductController extends Controller
             'price'              => ['required', 'numeric', 'min:0'],
             'sale_price'         => ['nullable', 'numeric', 'min:0'],
             'stock'              => ['required', 'integer', 'min:0'],
-            'sku'                => ['required', 'string', "unique:products,sku" . ($id ? ",$id" : '')],
+            'sku'                => ['required', 'string', 'unique:products,sku' . ($id ? ",$id" : '')],
             'weight'             => ['nullable', 'numeric'],
             'is_active'          => ['boolean'],
             'is_featured'        => ['boolean'],

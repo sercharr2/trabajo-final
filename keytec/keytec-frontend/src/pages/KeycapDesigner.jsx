@@ -155,7 +155,7 @@ export default function KeycapDesigner() {
           />
 
           <p className="text-xs text-[var(--color-text-dim)] mt-2 text-center">
-            🖱️ Arrastrar: rotar · Ctrl + arrastrar: mover · Scroll: zoom · Click en tecla: editar
+            🖱️ click derecho: rotar · (Shift + click)/click izquierdo: mover · Scroll: zoom · Click en tecla: editar
           </p>
 
           {/* Paletas */}
@@ -204,23 +204,6 @@ export default function KeycapDesigner() {
                 <option value="TKL">TKL (80%)</option>
                 <option value="Full">Full Size</option>
               </select>
-            </div>
-            <div>
-              <label className="block mb-1.5 text-sm font-medium">Color base (placa)</label>
-              <div className="flex gap-2">
-                <input
-                  type="color"
-                  value={baseColor}
-                  onChange={(e) => setBaseColor(e.target.value)}
-                  className="w-12 h-10 rounded-lg cursor-pointer bg-[var(--color-bg)] border border-[var(--color-border)]"
-                />
-                <input
-                  type="text"
-                  value={baseColor}
-                  onChange={(e) => setBaseColor(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-lg font-mono text-sm bg-[var(--color-bg)] border border-[var(--color-border)] focus:outline-none focus:border-[var(--color-primary)]"
-                />
-              </div>
             </div>
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input

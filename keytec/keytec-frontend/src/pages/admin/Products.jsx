@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Edit, Trash2, X, Search } from 'lucide-react'
+import { Plus, Edit, Trash2, X, Search, Image as ImageIcon, Upload, Star } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { adminApi } from '../../api/admin'
 import { categoriesApi } from '../../api/categories'
@@ -12,7 +12,7 @@ import { formatPrice } from '../../utils/format'
 export default function AdminProducts() {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
-  const [editing, setEditing] = useState(null) // null | {} | product
+  const [editing, setEditing] = useState(null) // null | {} (nuevo) | product
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'products', { search }],
@@ -127,7 +127,6 @@ export default function AdminProducts() {
           onClose={() => setEditing(null)}
           onSaved={() => {
             queryClient.invalidateQueries({ queryKey: ['admin', 'products'] })
-            setEditing(null)
           }}
         />
       )}
@@ -135,7 +134,79 @@ export default function AdminProducts() {
   )
 }
 
+// ─── Modal con tabs: Datos | Imágenes ─────────────────────────────────
 function ProductFormModal({ product, onClose, onSaved }) {
+  const isEditing = !!product
+  const [tab, setTab] = useState('data')
+  const [currentProduct, setCurrentProduct] = useState(product)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-4"
+      >
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">{isEditing ? 'Editar producto' : 'Nuevo producto'}</h2>
+          <button type="button" onClick={onClose} className="p-1 hover:bg-[var(--color-surface-2)] rounded">
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 border-b border-[var(--color-border)]">
+          <button
+            type="button"
+            onClick={() => setTab('data')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors ${
+              tab === 'data'
+                ? 'border-[var(--color-primary)] text-[var(--color-primary)]'
+                : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+            }`}
+          >
+            Datos
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('images')}
+            disabled={!currentProduct?.id}
+            className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
+              tab === 'images'
+                ? 'border-[var(--color-primary)] text-[var(--color-primary)]'
+                : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+            }`}
+            title={!currentProduct?.id ? 'Guarda el producto primero' : ''}
+          >
+            <ImageIcon size={14} className="inline mr-1" />
+            Imágenes {currentProduct?.images && `(${currentProduct.images.length})`}
+          </button>
+        </div>
+
+        {tab === 'data' && (
+          <DataForm
+            product={currentProduct}
+            onSaved={(saved) => {
+              setCurrentProduct(saved)
+              onSaved?.()
+              if (!isEditing) setTab('images') // tras crear nuevo, salta a imagenes
+            }}
+            onClose={onClose}
+          />
+        )}
+
+        {tab === 'images' && currentProduct?.id && (
+          <ImagesPanel
+            product={currentProduct}
+            onChange={(p) => { setCurrentProduct(p); onSaved?.() }}
+          />
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Pestaña: datos del producto ──────────────────────────────────────
+function DataForm({ product, onSaved, onClose }) {
   const isEditing = !!product
   const [form, setForm] = useState({
     name: product?.name || '',
@@ -161,9 +232,9 @@ function ProductFormModal({ product, onClose, onSaved }) {
     mutationFn: (payload) => isEditing
       ? adminApi.updateProduct(product.id, payload)
       : adminApi.createProduct(payload),
-    onSuccess: () => {
+    onSuccess: (saved) => {
       toast.success(isEditing ? 'Producto actualizado' : 'Producto creado')
-      onSaved()
+      onSaved?.(saved)
     },
     onError: (err) => {
       const data = err?.response?.data
@@ -185,72 +256,176 @@ function ProductFormModal({ product, onClose, onSaved }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
-      <form
-        onSubmit={submit}
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[var(--color-surface)] border border-[var(--color-border)] rounded-2xl p-6 space-y-4"
-      >
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">{isEditing ? 'Editar producto' : 'Nuevo producto'}</h2>
-          <button type="button" onClick={onClose} className="p-1 hover:bg-[var(--color-surface-2)] rounded">
-            <X size={18} />
-          </button>
+    <form onSubmit={submit} className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Input label="Nombre" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} error={errors.name?.[0]} containerClassName="md:col-span-2" />
+        <Input label="SKU" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} error={errors.sku?.[0]} />
+        <div>
+          <label className="block mb-1.5 text-sm font-medium">Categoría</label>
+          <select
+            value={form.category_id}
+            onChange={(e) => setForm({ ...form, category_id: e.target.value })}
+            className="w-full px-3 py-2 rounded-lg bg-[var(--color-bg)] border border-[var(--color-border)] focus:outline-none focus:border-[var(--color-primary)]"
+          >
+            <option value="">— sin categoría —</option>
+            {(categories ?? []).map((c) => (
+              <option key={c.id} value={c.id}>{c.parent_id ? '— ' : ''}{c.name}</option>
+            ))}
+          </select>
         </div>
+        <Input label="Precio (€)" type="number" step="0.01" required value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} error={errors.price?.[0]} />
+        <Input label="Precio oferta (€)" type="number" step="0.01" value={form.sale_price ?? ''} onChange={(e) => setForm({ ...form, sale_price: e.target.value })} error={errors.sale_price?.[0]} />
+        <Input label="Stock" type="number" required value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} error={errors.stock?.[0]} />
+        <Input label="Descripción corta" value={form.short_description} onChange={(e) => setForm({ ...form, short_description: e.target.value })} error={errors.short_description?.[0]} containerClassName="md:col-span-2" />
+        <div className="md:col-span-2">
+          <label className="block mb-1.5 text-sm font-medium">Descripción completa</label>
+          <textarea
+            rows={4}
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            className="w-full px-3 py-2 rounded-lg bg-[var(--color-bg)] border border-[var(--color-border)] focus:outline-none focus:border-[var(--color-primary)]"
+          />
+        </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input label="Nombre" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} error={errors.name?.[0]} containerClassName="md:col-span-2" />
-          <Input label="SKU" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} error={errors.sku?.[0]} />
-          <div>
-            <label className="block mb-1.5 text-sm font-medium">Categoría</label>
-            <select
-              value={form.category_id}
-              onChange={(e) => setForm({ ...form, category_id: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg bg-[var(--color-bg)] border border-[var(--color-border)] focus:outline-none focus:border-[var(--color-primary)]"
-            >
-              <option value="">— sin categoría —</option>
-              {(categories ?? []).map((c) => (
-                <option key={c.id} value={c.id}>{c.parent_id ? '— ' : ''}{c.name}</option>
-              ))}
-            </select>
+      <div className="flex flex-wrap gap-4 text-sm">
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="w-4 h-4 accent-[var(--color-primary)]" />
+          Activo
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked={form.is_featured} onChange={(e) => setForm({ ...form, is_featured: e.target.checked })} className="w-4 h-4 accent-[var(--color-primary)]" />
+          Destacado
+        </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked={form.is_customizable} onChange={(e) => setForm({ ...form, is_customizable: e.target.checked })} className="w-4 h-4 accent-[var(--color-primary)]" />
+          Personalizable
+        </label>
+      </div>
+
+      <div className="flex justify-end gap-3 pt-4 border-t border-[var(--color-border)]">
+        <Button type="button" variant="ghost" onClick={onClose}>Cerrar</Button>
+        <Button type="submit" loading={saveMutation.isPending}>
+          {isEditing ? 'Guardar cambios' : 'Crear y subir imágenes'}
+        </Button>
+      </div>
+    </form>
+  )
+}
+
+// ─── Pestaña: imágenes del producto ───────────────────────────────────
+function ImagesPanel({ product, onChange }) {
+  const queryClient = useQueryClient()
+  const [uploading, setUploading] = useState(false)
+  const [isPrimary, setIsPrimary] = useState(false)
+
+  const refresh = async () => {
+    const fresh = await adminApi.getProduct(product.id)
+    onChange?.(fresh)
+    queryClient.invalidateQueries({ queryKey: ['admin', 'products'] })
+  }
+
+  const handleFiles = async (files) => {
+    if (!files?.length) return
+    setUploading(true)
+    try {
+      for (const file of files) {
+        const fd = new FormData()
+        fd.append('image', file)
+        if (isPrimary) fd.append('is_primary', '1')
+        await adminApi.uploadImage(product.id, fd)
+      }
+      toast.success(`${files.length} imagen(es) subida(s)`)
+      await refresh()
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Error al subir')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const handleDelete = async (img) => {
+    if (!confirm('¿Eliminar esta imagen?')) return
+    try {
+      await adminApi.deleteImage(product.id, img.id)
+      toast.success('Imagen eliminada')
+      await refresh()
+    } catch {
+      toast.error('No se pudo eliminar')
+    }
+  }
+
+  const images = product.images || []
+
+  return (
+    <div className="space-y-4">
+      {/* Drop zone */}
+      <label className="block">
+        <div
+          className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors
+            ${uploading
+              ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5'
+              : 'border-[var(--color-border)] hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-2)]'}`}
+        >
+          {uploading ? (
+            <>
+              <Spinner className="mx-auto mb-2" />
+              <p className="text-sm text-[var(--color-text-muted)]">Subiendo imágenes...</p>
+            </>
+          ) : (
+            <>
+              <Upload size={32} className="mx-auto mb-2 text-[var(--color-primary)]" />
+              <p className="text-sm font-medium">Haz clic o arrastra para subir imágenes</p>
+              <p className="text-xs text-[var(--color-text-dim)] mt-1">JPG, PNG, WebP - Máx 4 MB</p>
+            </>
+          )}
+        </div>
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          className="hidden"
+          disabled={uploading}
+          onChange={(e) => handleFiles(Array.from(e.target.files || []))}
+        />
+      </label>
+
+      <label className="flex items-center gap-2 text-sm cursor-pointer">
+        <input
+          type="checkbox"
+          checked={isPrimary}
+          onChange={(e) => setIsPrimary(e.target.checked)}
+          className="w-4 h-4 accent-[var(--color-primary)]"
+        />
+        Marcar la próxima subida como imagen principal
+      </label>
+
+      {/* Galería de imágenes existentes */}
+      {images.length > 0 && (
+        <div>
+          <h3 className="text-sm font-medium mb-2">Imágenes actuales ({images.length})</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {images.map((img) => (
+              <div key={img.id} className="relative group rounded-lg overflow-hidden bg-[var(--color-surface-2)] border border-[var(--color-border)]">
+                <img src={img.url} alt={img.alt_text || ''} className="w-full h-32 object-cover" />
+                {img.is_primary && (
+                  <span className="absolute top-1 left-1 px-1.5 py-0.5 text-[10px] rounded bg-[var(--color-warning)]/90 text-black font-bold flex items-center gap-1">
+                    <Star size={10} className="fill-current" /> Principal
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleDelete(img)}
+                  className="absolute top-1 right-1 p-1 rounded bg-[var(--color-danger)]/90 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Eliminar imagen"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            ))}
           </div>
-          <Input label="Precio (€)" type="number" step="0.01" required value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} error={errors.price?.[0]} />
-          <Input label="Precio oferta (€)" type="number" step="0.01" value={form.sale_price ?? ''} onChange={(e) => setForm({ ...form, sale_price: e.target.value })} error={errors.sale_price?.[0]} />
-          <Input label="Stock" type="number" required value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} error={errors.stock?.[0]} />
-          <Input label="Descripción corta" value={form.short_description} onChange={(e) => setForm({ ...form, short_description: e.target.value })} error={errors.short_description?.[0]} containerClassName="md:col-span-2" />
-          <div className="md:col-span-2">
-            <label className="block mb-1.5 text-sm font-medium">Descripción completa</label>
-            <textarea
-              rows={4}
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg bg-[var(--color-bg)] border border-[var(--color-border)] focus:outline-none focus:border-[var(--color-primary)]"
-            />
-          </div>
         </div>
-
-        <div className="flex flex-wrap gap-4 text-sm">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="w-4 h-4 accent-[var(--color-primary)]" />
-            Activo
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={form.is_featured} onChange={(e) => setForm({ ...form, is_featured: e.target.checked })} className="w-4 h-4 accent-[var(--color-primary)]" />
-            Destacado
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={form.is_customizable} onChange={(e) => setForm({ ...form, is_customizable: e.target.checked })} className="w-4 h-4 accent-[var(--color-primary)]" />
-            Personalizable
-          </label>
-        </div>
-
-        <div className="flex justify-end gap-3 pt-4 border-t border-[var(--color-border)]">
-          <Button type="button" variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button type="submit" loading={saveMutation.isPending}>
-            {isEditing ? 'Guardar cambios' : 'Crear producto'}
-          </Button>
-        </div>
-      </form>
+      )}
     </div>
   )
 }

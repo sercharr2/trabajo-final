@@ -97,10 +97,6 @@ export default function Login() {
           </p>
         </form>
 
-        <p className="text-center text-xs text-[var(--color-text-dim)] mt-6">
-          Demo: <code className="text-[var(--color-accent)]">admin@keytec.es</code> /
-          <code className="text-[var(--color-accent)]"> password</code>
-        </p>
       </div>
     </div>
   )
